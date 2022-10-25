@@ -1,0 +1,56 @@
+/// @title Transient Contract
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice A metamorphic contract without transparent proxy reliance
+/// @notice Adapted from <https://github.com/0age/metamorphic>
+/// @notice This contract will create a metamorphic contract, or an upgradeable
+/// contract that does not rely on a transparent proxy, when deployed using
+/// CREATE2. Unlike with upgradeable transparent proxies, the state of a
+/// metamorphic contract  will be wiped clean with each upgrade. The metamorphic
+/// contract can also use a constructor if desired. With great power comes great
+/// responsibility - implement appropriate controls and educate the users of your
+/// contract if it will be interacted with!
+
+/// @notice Transient Contract Deployer must implement this function
+#define function getInitializationCode() view returns (bytes memory initializationCode)
+
+/// @notice Payable
+/// @notice Must be called by a contract that implements the `getInitializationCode` function
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    // Retrieve the target implementation address from creator of this contract.
+    __FUNC_SIG(getInitializationCode) 0x00 mstore
+    0x00                // [retSize]
+    0x00                // [retOffset, retSize]
+    dup1                // [argSize, retOffset, retSize]
+    dup1                // [argOffset, argSize, retOffset, retSize]
+    caller              // [msg.sender, argOffset, argSize, retOffset, retSize]
+    gas                 // [gas, msg.sender, argOffset, argSize, retOffset, retSize]
+    staticcall          // [success]
+
+    // Revert if the call failed
+    success jumpi       // []
+    0x00 dup1 revert    // _reverts_
+    success:            // []
+
+    // Copy the initialization code from return data
+    returndatasize      // [retSize]
+    0x00                // [retOffset, retSize]
+    dup1                // [destOffset]
+    returndatacopy      // []
+
+    // Create the contract using the initialization code in memory
+    0x00 mload          // [initCodeOffset]
+    dup1 mload          // [initCodeSize, initCodeOffset]
+    swap1 0x20 add      // [initCodeOffset, initCodeSize]
+    callvalue           // [value, initCodeOffset, initCodeSize]
+    create              // [address]
+
+    // Check that the address does not equal zero
+    dup1 valid jumpi    // [address]
+    0x00 dup1 revert    // _reverts_
+    valid:              // [address]
+
+    // Destroy this transient contract
+    // Forwards the remaining callvalue to the new address
+    selfdestruct
+}

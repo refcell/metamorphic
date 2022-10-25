@@ -10,8 +10,9 @@
 ///
 /// How does Metamorphism work?
 ///
-/// In the constructor, set up the initialization code for metamorphic contracts as well as the keccak256 hash of the given initialization code.
-/// The bytes passed into the Metamorphic Factory is used to deploy any transient contracts, which will deploy any metamorphic contracts that require the use of a constructor.
+/// In the constructor, set up the initialization code for metamorphic contracts.
+/// The bytes passed into the Metamorphic Factory is used to deploy any transient contracts,
+/// which will deploy any metamorphic contracts that require the use of a constructor.
 ///
 /// Metamorphic contract initialization code (29 bytes): 0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3
 ///

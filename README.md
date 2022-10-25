@@ -1,6 +1,6 @@
 <img align="right" width="150" height="150" top="100" src="./assets/metamorphic.jpg">
 
-## metamorphic ![tests](https://img.shields.io/github/workflow/status/abigger87/metamorphic/Tests/master?label=Tests) ![license](https://img.shields.io/github/license/abigger87/metamorphic?label=License) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey) ![huff](https://img.shields.io/badge/huff-0.3.0-8b6c5c)
+## metamorphic ![tests](https://img.shields.io/github/workflow/status/abigger87/metamorphic/ci/master?label=tests) ![license](https://img.shields.io/github/license/abigger87/metamorphic?label=License) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey) ![huff](https://img.shields.io/badge/huff-0.3.0-8b6c5c)
 
 [Huff](https://github.com/huff-language) Smart Contracts for creating Metamorphic (or "redeployable") EVM Contracts.
 
@@ -26,8 +26,6 @@ Well, this fails if the initialization code of the contract is non-deterministic
 
 
 
-
-Metamorphic contracts are contracts that can be redeployed with new code to the same address. Pioneered by [0age](https://github.com/0age) as described in [this blog post](https://0age.medium.com/the-promise-and-the-peril-of-metamorphic-contracts-9eb8b8413c5e), metamorphic contracts were brought into existence by 
 
 // TODO:
 
