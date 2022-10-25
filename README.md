@@ -58,6 +58,23 @@ forge install abigger87/metamorphic
 > We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
 
+### Contracts
+
+```txt
+.
+├─ src
+|  ├─ interfaces
+|  |  ├─ IImmutableCreate2Factory.sol — 
+|  |  ├─ IMetamorphicFactory.sol — 
+|  |  └─ IMetapod.sol — 
+|  ├─ ImmutableCreate2Factory.huff — 
+|  ├─ MetamorphicFactory.huff — 
+|  ├─ Metapod.huff — 
+|  └─ TransientContract.huff — 
+└─ tests
+   └─ 🧪🧪🧪
+```
+
 ### Acknowledgements
 
 - [femplate](https://github.com/0age/metamorphic)
