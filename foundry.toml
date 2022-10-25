@@ -9,3 +9,9 @@ remappings = [
     "forge-std=lib/forge-std/src/",
     "foundry-huff=lib/foundry-huff/src/",
 ]
+fs_permissions = [
+    { access = "read", path = "./src/ImmutableCreate2Factory.huff" },
+    { access = "read", path = "./src/MetamorphicFactory.huff" },
+    { access = "read", path = "./src/Metapod.huff" },
+    { access = "read", path = "./src/TransientContract.huff" },
+]
