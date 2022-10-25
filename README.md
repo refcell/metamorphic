@@ -52,10 +52,12 @@ To install with [Foundry](https://github.com/foundry-rs/foundry):
 forge install abigger87/metamorphic
 ```
 
-
-### License
-
-[MIT](https://github.com/abigger87/metamorphic/blob/master/LICENSE)
+> **Warning**
+>
+> These contracts are **unaudited** and are not recommended for use in production.
+>
+> Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
+> We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
 
 ### Acknowledgements
