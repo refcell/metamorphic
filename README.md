@@ -1,6 +1,6 @@
 <img align="right" width="150" height="150" top="100" src="./assets/metamorphic.jpg">
 
-## metamorphic ![tests](https://img.shields.io/github/workflow/status/abigger87/metamorphic/ci/master?label=tests) ![license](https://img.shields.io/github/license/abigger87/metamorphic?label=License) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey) ![huff](https://img.shields.io/badge/huff-0.3.0-8b6c5c)
+# metamorphic ![tests](https://img.shields.io/github/workflow/status/abigger87/metamorphic/ci/master?label=tests) ![license](https://img.shields.io/github/license/abigger87/metamorphic?label=License) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey) ![huff](https://img.shields.io/badge/huff-0.3.0-8b6c5c)
 
 [Huff](https://github.com/huff-language) Smart Contracts for creating Metamorphic (or "redeployable") EVM Contracts.
 
