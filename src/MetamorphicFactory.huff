@@ -96,20 +96,96 @@
 /// @notice This is a mapping and should use the hashmap helpers: LOAD_ELEMENTS_FROM_KEYS and STORE_ELEMENT_FROM_KEYS
 #define constant INIT_CODES = FREE_MEMORY_POINTER()
 
+/// @notice Internal
+/// @notice Helper macro to copy the bytes memory constructor argument
+#define macro _LOAD_CONSTRUCTOR_ARGS() = takes (0) returns (1) {
+  // Input Stack: []
+  // Output Stack: [memory location of initialization bytes]
+
+  // Codecopy the bytecode
+  codesize dup1 0x00 0x00     // [destOffset, offset, size, size]
+  codecopy                    // [size]
+
+  // Word-align the size
+  0x10 add                    // [size + 0x10]
+  0x20 swap1 div              // [(size + 0x10) / 0x20]
+  0x20 mul                    // [((size + 0x10) / 0x20) * 0x20]
+
+  // Iterate backwards until we find: 0x20 | size | bytes (where bytes.length == size)
+  0x00                        // [i, size]
+  loop:
+    dup2 dup2                 // [i, size, i, size]
+    0x20 add swap1 sub        // [size - (i + 0x20), i, size]
+    mload dup2                // [i, bytecode[size - (i + 0x20)], i, size]
+    // NOTE: we have to use less than here since the index is word aligned and bytes may not be
+    swap1 lt                  // [bytecode[size - (i + 0x20)] < i, i, size]
+    dup2 0x40 add             // [i + 0x40, bytecode[size - (i + 0x20)] == i, i, size]
+    dup4 sub mload            // [bytecode[size - (i + 0x40)], bytecode[size - (i + 0x20)] == i, i, size]
+    0x20 eq                   // [bytecode[size - (i + 0x40)] == 0x20, bytecode[size - (i + 0x20)] == i, i, size]
+    and                       // [bytecode[size - (i + 0x40)] == 0x20 && bytecode[size - (i + 0x20)] == i, i, size]
+    found jumpi               // [i, size]
+
+    // Increment and revert on underflow
+    0x20 add dup1 0x20 add    // [i + 0x40, i + 0x40, size]
+    dup3 sub iszero iszero    // [size - (i + 0x40) > 0, i + 0x20, size]
+    loop jumpi                // [i, size]
+
+    0x00 dup1 revert          // _reverts_
+
+  found:
+   // Get the pointer to the bytes size
+    0x20 add swap1 sub        // [size - i]
+}
+
+/// @notice Internal
+/// @notice Saves bytes memory to storage
+/// @param ptr The pointer to the storage location
+#define macro _SAVE_BYTES_TO_STORAGE(ptr) = takes (1) returns (0) {
+  // Input Stack: [bytes size loc]
+  // Output Stack: []
+
+  // Loop over the memory and save to storage
+  dup1 mload                        // [size, loc]
+  swap1 0x20 add                    // [bytes_ptr, size]
+  0x00                              // [i, bytes_ptr, size]
+  loop:
+    0x20 add dup3 dup2 lt iszero    // [i + 0x20 >= size, i + 0x20, bytes_ptr, size]
+    done jumpi                      // [i + 0x20, bytes_ptr, size]
+    dup2 dup2 add
+
+    // TODO::::
+
+    <ptr> sstore
+
+  done:
+    // Clean the stack
+    pop pop pop
+}
+
+/// @notice Internal
+/// @notice Hashes the transient initialization code from storage
+/// @param ptr The pointer to the storage location
+#define macro _HASH_STORAGE_BYTES(ptr) = takes (0) returns (1) {
+  // Input Stack: []
+  // Output Stack: [hash]
+
+  // TODO: Iterate over <ptr> storage bytes, save to memory, and hash
+
+}
+
 /// @notice Constructor
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
   // Load the transient initialization code from the creation code
-  0x20                                                        // [size]
-  0x20 codesize sub                                           // [offset, size]
-  codecopy                                                    // [transientContractInitializationCode]
+  _LOAD_CONSTRUCTOR_ARGS()                                            // [transientContractInitializationCode]
 
   // Store the transient contract initialization code in storage
-  dup1 [TRANSIENT_CONTRACT_INITIALIZATION_CODE] sstore        // [transientContractInitializationCode]
+  _SAVE_BYTES_TO_STORAGE([TRANSIENT_CONTRACT_INITIALIZATION_CODE])    // []
 
   // Calculate the transient contract initialization code hash
-  0x00 mstore                                                 // []
-  0x20 0x00 sha3                                              // [hash]
-  [TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH] sstore     // []
+  _HASH_STORAGE_BYTES([TRANSIENT_CONTRACT_INITIALIZATION_CODE])       // [hash]
+
+  // Store the transient contract initialization code hash in storage
+  [TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH] sstore             // []
 }
 
 /// @notice The function dispatch (main contract entrypoint)
