@@ -68,10 +68,12 @@
 #define function getImplementation() view returns (address)
 #define function getInitializationCode() view returns (bytes memory)
 #define function getImplementationContractAddress(address) view returns (address)
+
 #define function getMetamorphicContractInstanceInitializationCode(address) external view returns (bytes memory)
 #define function findMetamorphicContractAddress(bytes32) external view returns (address)
 #define function findTransientContractAddress(bytes32) external view returns (address)
 #define function findMetamorphicContractAddressWithConstructor(bytes32) external view returns (address)
+
 #define function getMetamorphicContractInitializationCode() external view returns (bytes memory)
 #define function getMetamorphicContractInitializationCodeHash() external view returns (bytes32)
 #define function getTransientContractInitializationCode() external view returns (bytes memory)
@@ -199,20 +201,51 @@
 /// @notice The function dispatch (main contract entrypoint)
 #define macro MAIN() = takes (0) returns (0) {
   // Load the function selector
-  pc calldataload 0xE0 shr                                                      // [selector]
+  pc calldataload 0xE0 shr                                                                                        // [selector]
 
-  // Dispatch on function selector
-  dup1 __FUNC_SIG(getImplementation) eq getImplJump jumpi                       // [selector]
-  dup1 __FUNC_SIG(getInitializationCode) eq getInitJump jumpi                   // [selector]
-  dup1 __FUNC_SIG(getImplementationContractAddress) eq getImplContJump jumpi    // [selector]
+  // Dispatch Stateful Functions With Selector
+  dup1 __FUNC_SIG(deployMetamorphicContract) eq deplyMContractJump jumpi                                          // [selector]
+  dup1 __FUNC_SIG(deployMetamorphicContractFromExistingImplementation) eq deployMContractExistingJump jumpi       // [selector]
+  dup1 __FUNC_SIG(deployMetamorphicContractWithConstructor) eq deployMContractConstructorJump jumpi               // [selector]
+
+  // Dispatch Viewable Functions With Selector
+  dup1 __FUNC_SIG(getImplementation) eq getImplJump jumpi                                                         // [selector]
+  dup1 __FUNC_SIG(getInitializationCode) eq getInitJump jumpi                                                     // [selector]
+  dup1 __FUNC_SIG(getImplementationContractAddress) eq getImplContJump jumpi                                      // [selector]
+
+  dup1 __FUNC_SIG(getMetamorphicContractInstanceInitializationCode) eq getMInstanceInitCodeJump jumpi             // [selector]
+  dup1 __FUNC_SIG(findMetamorphicContractAddress) eq findMContractAddressJump jumpi                               // [selector]
+  dup1 __FUNC_SIG(findTransientContractAddress) eq findTContractAddressJump jumpi                                 // [selector]
+  dup1 __FUNC_SIG(findMetamorphicContractAddressWithConstructor) eq findMContractAddressConstructorJump jumpi     // [selector]
+
+
+  dup1 __FUNC_SIG(getMetamorphicContractInitializationCode) eq getMInitCodeJump jumpi                             // [selector]
+  dup1 __FUNC_SIG(getMetamorphicContractInitializationCodeHash) eq getMInitCodeHashJump jumpi                     // [selector]
+  dup1 __FUNC_SIG(getTransientContractInitializationCode) eq getTInitCodeJump jumpi                               // [selector]
+  dup1 __FUNC_SIG(getTransientContractInitializationCodeHash) eq getTInitCodeHashJump jumpi                       // [selector]
+
 
   // Revert on invalid dispatch
-  0x00 dup1 revert                                                              // _reverts_
+  0x00 dup1 revert                                                      // _reverts_
 
   // Jump Dests
-  getImplJump: GET_IMPLEMENTATION()
-  getInitJump: GET_INIT_CODE()
-  getImplContJump: GET_IMPLEMENTATION_FOR_ADDRESS()
+  deplyMContractJump: stop                                              // _stops_
+  deployMContractExistingJump: stop                                     // _stops_
+  deployMContractConstructorJump: stop                                  // _stops_
+
+  getImplJump: GET_IMPLEMENTATION()                                     // _stops_
+  getInitJump: GET_INIT_CODE()                                          // _stops_
+  getImplContJump: GET_IMPLEMENTATION_FOR_ADDRESS()                     // _stops_
+
+  getMInstanceInitCodeJump: stop                                        // _stops_
+  findMContractAddressJump: stop                                        // _stops_
+  findTContractAddressJump: stop                                        // _stops_
+  findMContractAddressConstructorJump: stop                             // _stops_
+
+  getMInitCodeJump: GET_METAMORPHIC_INITIALIZATION_CODE()               // _stops_
+  getMInitCodeHashJump: GET_METAMORPHIC_INITIALIZATION_CODE_HASH()      // _stops_
+  getTInitCodeJump: GET_TRANSIENT_INITIALIZATION_CODE()                 // _stops_
+  getTInitCodeHashJump: GET_TRANSIENT_INITIALIZATION_CODE_HASH()        // _stops_
 }
 
 // ----------------------------------
@@ -325,7 +358,42 @@
   0x20 0x00 return                        // _returns_
 }
 
+/// @notice View
+/// @notice Equivalent of `getMetamorphicContractInitializationCode`
+/// @notice Retrieves the initialization code of metamorphic contracts
+#define macro GET_METAMORPHIC_INITIALIZATION_CODE() = takes (0) returns (0) {
+  [MEAMORPHIC_CONTRACT_INITIALIZATION_CODE]       // [init_code]
+  0x00 mstore                                     // []
+  0x20 0x00 return                                // _returns_
+}
 
+/// @notice View
+/// @notice Equivalent of `getMetamorphicContractInitializationCodeHash`
+/// @notice Retrieves the keccak256 hash of the initialization code of metamorphic contracts
+#define macro GET_METAMORPHIC_INITIALIZATION_CODE_HASH() = takes (0) returns (0) {
+  [METAMORPHIC_CONTRACT_INITIALIZATION_CODE_HASH]   // [hash]
+  0x00 mstore                                       // []
+  0x20 0x00 return                                  // _returns_
+}
+
+/// @notice View
+/// @notice Equivalent of `getTransientContractInitializationCode`
+/// @notice Retrieves the initialization code of transient contracts
+#define macro GET_TRANSIENT_INITIALIZATION_CODE() = takes (0) returns (0) {
+  // TODO: load bytes memory from storage @ TRANSIENT_CONTRACT_INITIALIZATION_CODE
+
+  0x00 mstore       // []
+  0x20 0x00 return  // _returns_
+} 
+
+/// @notice View
+/// @notice Equivalent of `getTransientContractInitializationCodeHash`
+/// @notice Retrieves the keccak256 hash of the initialization code of transient contracts
+#define macro GET_TRANSIENT_INITIALIZATION_CODE_HASH() = takes (0) returns (0) {
+  [TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH]  // [hash]
+  0x00 mstore                                       // []
+  0x20 0x00 return                                  // _returns_
+}
 
 
 // ----------------------------------
