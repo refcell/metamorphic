@@ -295,7 +295,7 @@
 /// @notice View
 /// @notice Equivalent of `findTransientContractAddress`
 /// @notice Compute the address of the transient contract that will be created upon submitting a given salt to the contract
-#define macro COMPUTE_METAMORPHIC_ADDRESS() = takes (0) returns (0) {
+#define macro COMPUTE_TRANSIENT_ADDRESS() = takes (0) returns (0) {
   // Load the bytes32 salt from calldata
   0x04 calldataload                       // [salt]
 
@@ -307,7 +307,23 @@
   0x20 0x00 return                        // _returns_
 }
 
+/// @notice View
+/// @notice Equivalent of `findMetamorphicContractAddressWithConstructor`
+/// @notice ompute the address of the metamorphic contract that will be created by the transient contract upon submitting a given salt to the contract
+#define macro COMPUTE_METAMORPHIC_ADDRESS_WITH_CONSTRUCTOR() = takes (0) returns (0) {
+  // Load the bytes32 salt from calldata
+  0x04 calldataload                       // [salt]
 
+  // Get the transient contract address
+  _COMPUTE_TRANSIENT_ADDRESS()          // [address]
+
+  // Compute the address of the metamorphic contract deployed via a transient contract
+  _COMPUTE_ADDRESS_WITH_CONSTRUCTOR()     // [address]
+
+  // Return
+  0x00 mstore                             // []
+  0x20 0x00 return                        // _returns_
+}
 
 
 
