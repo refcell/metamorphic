@@ -215,8 +215,13 @@
   getImplContJump: GET_IMPLEMENTATION_FOR_ADDRESS()
 }
 
+// ----------------------------------
+// Viewable Functions
+// ----------------------------------
+
 
 /// @notice View
+/// @notice Equivalent of `getImplementation`
 /// @notice Gets the implementation for the msg.sender
 /// @notice Called by the constructor of each metamorphic contract
 #define macro GET_IMPLEMENTATION() = takes (0) returns (0) {
@@ -230,6 +235,7 @@
 }
 
 /// @notice View
+/// @notice Equivalent of `getInitializationCode`
 /// @notice Gets the initialization code for the msg.sender
 /// @notice Called by the constructor of each transient contract
 #define macro GET_INIT_CODE() = takes (0) returns (0) {
@@ -243,6 +249,7 @@
 }
 
 /// @notice View
+/// @notice Equivalent of `getImplementationContractAddress`
 /// @notice Gets the implementation contract for a given metamorphic contract address
 /// @param `metamorphic` The metamorphic contract address
 #define macro GET_IMPLEMENTATION_FOR_ADDRESS() = takes (0) returns (0) {
@@ -257,6 +264,7 @@
 }
 
 /// @notice View
+/// @notice Equivalent of `getMetamorphicContractInstanceInitializationCode`
 /// @notice Gets the init code of a metamorphic contract instance
 #define macro GET_CONTRACT_INIT_CODE() = takes (0) returns (0) {
   // Load the contract address from calldata
@@ -270,6 +278,7 @@
 }
 
 /// @notice View
+/// @notice Equivalent of `findMetamorphicContractAddress`
 /// @notice Compute the address of the metamorphic contract that will be created upon submitting a given salt to the contract
 #define macro COMPUTE_METAMORPHIC_ADDRESS() = takes (0) returns (0) {
   // Load the bytes32 salt from calldata
@@ -282,6 +291,31 @@
   0x00 mstore                             // []
   0x20 0x00 return                        // _returns_
 }
+
+/// @notice View
+/// @notice Equivalent of `findTransientContractAddress`
+/// @notice Compute the address of the transient contract that will be created upon submitting a given salt to the contract
+#define macro COMPUTE_METAMORPHIC_ADDRESS() = takes (0) returns (0) {
+  // Load the bytes32 salt from calldata
+  0x04 calldataload                       // [salt]
+
+  // Get the transient contract address
+  _COMPUTE_TRANSIENT_ADDRESS()            // [address]
+
+  // Return
+  0x00 mstore                             // []
+  0x20 0x00 return                        // _returns_
+}
+
+
+
+
+
+
+// ----------------------------------
+// Internal Helpers
+// ----------------------------------
+
 
 /// @notice Internal
 /// @notice Calculates the metamorphic contract address given a salt
