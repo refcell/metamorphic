@@ -237,16 +237,47 @@
   getInitJump: GET_INIT_CODE()                                          // _stops_
   getImplContJump: GET_IMPLEMENTATION_FOR_ADDRESS()                     // _stops_
 
-  getMInstanceInitCodeJump: stop                                        // _stops_
-  findMContractAddressJump: stop                                        // _stops_
-  findTContractAddressJump: stop                                        // _stops_
-  findMContractAddressConstructorJump: stop                             // _stops_
+  getMInstanceInitCodeJump: GET_CONTRACT_INIT_CODE()                                          // _stops_
+  findMContractAddressJump: COMPUTE_METAMORPHIC_ADDRESS()                                     // _stops_
+  findTContractAddressJump: COMPUTE_TRANSIENT_ADDRESS()                                       // _stops_
+  findMContractAddressConstructorJump: COMPUTE_METAMORPHIC_ADDRESS_WITH_CONSTRUCTOR()         // _stops_
 
   getMInitCodeJump: GET_METAMORPHIC_INITIALIZATION_CODE()               // _stops_
   getMInitCodeHashJump: GET_METAMORPHIC_INITIALIZATION_CODE_HASH()      // _stops_
   getTInitCodeJump: GET_TRANSIENT_INITIALIZATION_CODE()                 // _stops_
   getTInitCodeHashJump: GET_TRANSIENT_INITIALIZATION_CODE_HASH()        // _stops_
 }
+
+
+// ----------------------------------
+// Stateful Functions
+// ----------------------------------
+
+/// @notice Stateful
+/// @notice Equivalent of `deployMetamorphicContract`
+/// @notice Deploys a metamorphic contract
+#define macro DEPLOY_METAMORPHIC_CONTRACT() = takes (0) returns (0) {
+  // Load the salt from calldata
+  0x04 calldataload                       // [bytes32(salt)]
+
+  // Load the implementation contract init code to the same location in memory
+  0x24 calldataload                       // [calldata_loc(init_code), salt]
+  dup1 calldataload                       // [size, calldata_loc(init_code), salt]
+  dup2 dup1 calldatacopy                  // [mem_loc(init_code), salt]
+
+  // Load the metamorphic contract init calldata to the same place in memory
+  0x44 calldataload                       // [calldata_loc(init_data), mem_loc(init_code), salt]
+  dup1 calldataload                       // [size, calldata_loc(init_data), mem_loc(init_code), salt]
+  dup2 dup1 calldatacopy                  // [mem_loc(init_data), mem_loc(init_code), salt]
+
+  // Modifiers
+  CONTAINS_CALLER()
+
+
+}
+
+
+
 
 // ----------------------------------
 // Viewable Functions
