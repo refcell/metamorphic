@@ -255,19 +255,23 @@
 
 /// @notice Stateful
 /// @notice Equivalent of `deployMetamorphicContract`
-/// @notice Deploy a metamorphic contract by submitting a given salt or nonce along with the initialization code for the metamorphic contract,
-///         and optionally provide calldata for initializing the new metamorphic contract.
+/// @notice Deploy a metamorphic contract by submitting a given salt or nonce along
+///         with the initialization code for the metamorphic contract, and
+///         optionally provide calldata for initializing the new metamorphic contract.
 ///         To replace the contract, first selfdestruct the current contract, then call
 ///         with the same salt value and new initialization code (be aware that all
-   * existing state will be wiped from the existing contract). Also note that
-   * the first 20 bytes of the salt must match the calling address, which
-   * prevents contracts from being created by unintended parties.
-   * @param salt bytes32 The nonce that will be passed into the CREATE2 call and
-   * thus will determine the resulant address of the metamorphic contract.
-   * @param implementationContractInitializationCode bytes The initialization
-   * code for the implementation contract for the metamorphic contract. It will
-   * be used to deploy a new contract that the metamorphic contract will then
-   * clone in its constructor.
+///         existing state will be wiped from the existing contract). Also note that
+///         the first 20 bytes of the salt must match the calling address, which
+///         prevents contracts from being created by unintended parties.
+/// @param salt bytes32 The nonce that will be passed into the CREATE2 call and
+///        thus will determine the resulant address of the metamorphic contract.
+/// @param implementationContractInitializationCode bytes The initialization
+///        code for the implementation contract for the metamorphic contract. It will
+///        be used to deploy a new contract that the metamorphic contract will then
+///        clone in its constructor.
+/// @param metamorphicContractInitializationCalldata bytes An optional data
+///        parameter that can be used to atomically initialize the metamorphic contract.
+/// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT() = takes (0) returns (0) {
   // Load the salt from calldata
   0x04 calldataload                       // [bytes32(salt)]
@@ -340,18 +344,49 @@
   // Emit the Metamorphosed event
   emitEventJump:                                              // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   __EVENT_HASH(Metamorphosed) 0x00 0x00 log3                  // [address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+
+  // Return the metamorphic contract address
+  0x00 mstore                                                 // [&mem[init_data], &mem[init_code], salt]
+  0x20 0x00 return                                            // _returns_
 }
 
 /// @notice Stateful
 /// @notice Equivalent of `deployMetamorphicContractFromExistingImplementation`
-/// @notice Deploys a metamorphic contract
+/// @notice Deploy a metamorphic contract by submitting a given salt or nonce
+///         along with the address of an existing implementation contract to clone, and
+///         optionally provide calldata for initializing the new metamorphic contract.
+///         To replace the contract, first selfdestruct the current contract, then call
+///         with the same salt value and a new implementation address (be aware that
+///         all existing state will be wiped from the existing contract). Also note
+///         that the first 20 bytes of the salt must match the calling address, which
+///         prevents contracts from being created by unintended parties.
+/// @param salt bytes32 The nonce that will be passed into the CREATE2 call and
+///        thus will determine the resulant address of the metamorphic contract.
+/// @param implementationContract address The address of the existing
+///        implementation contract to clone.
+/// @param metamorphicContractInitializationCalldata bytes An optional data
+///        parameter that can be used to atomically initialize the metamorphic
+///        contract.
+/// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT_FROM_EXISTING() = takes (0) returns (0) {
   // TODO:
 }
 
 /// @notice Stateful
 /// @notice Equivalent of `deployMetamorphicContractWithConstructor`
-/// @notice Deploys a metamorphic contract
+/// @notice Deploy a metamorphic contract by submitting a given salt or nonce
+///         along with the initialization code to a transient contract which will then
+///         deploy the metamorphic contract before immediately selfdestructing. To
+///         replace the metamorphic contract, first selfdestruct the current contract,
+///         then call with the same salt value and new initialization code (be aware
+///         that all existing state will be wiped from the existing contract). Also
+///         note that the first 20 bytes of the salt must match the calling address,
+///         which prevents contracts from being created by unintended parties.
+/// @param salt bytes32 The nonce that will be passed into the CREATE2 call and
+///        thus will determine the resulant address of the metamorphic contract.
+/// @param initializationCode bytes The initialization code for the metamorphic
+///        contract that will be deployed by the transient contract.
+/// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT_WITH_CONSTRUCTOR() = takes (0) returns (0) {
   // TODO:
 }
