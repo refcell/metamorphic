@@ -310,7 +310,7 @@
   // Deploy the metamorphic contract data with create2
   dup5                                                        // [salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   [MEAMORPHIC_CONTRACT_INITIALIZATION_CODE] 0x00 mstore       // [salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
-  0x3A                                                        // [size, salt ,address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  0x1D                                                        // [size, salt ,address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   0x00                                                        // [offset, size, salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   0x00                                                        // [value, offset, size, salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   create2                                                     // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
@@ -369,7 +369,35 @@
 ///        contract.
 /// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT_FROM_EXISTING() = takes (0) returns (0) {
-  // TODO:
+  // Load the salt from calldata
+  0x04 calldataload                       // [bytes32(salt)]
+
+  // Load the implementation contract address
+  0x24 calldataload                       // [implAddress, salt]
+
+  // Load the metamorphic contract init calldata to the same place in memory
+  0x44 calldataload                       // [&calldata[init_data], implAddress, salt]
+  dup1 calldataload                       // [size, &calldata[init_data], implAddress, salt]
+  dup2 dup1 calldatacopy                  // [&mem[init_data], implAddress, salt]
+
+  // Modifiers
+  dup3 CONTAINS_CALLER()                  // [&mem[init_data], implAddress, salt]
+
+  // Get the metamorphic contract address
+  dup3 _COMPUTE_METAMORPHIC_ADDRESS()     // [address(metamoprhicContract), &mem[init_data], implAddress, salt]
+
+  // Store the implementation address to be retrieved by the metamoprhic contract
+  dup3 dup2 [IMPLEMENTATIONS]             // [slot, address(metamoprhicContract), implAddress, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  STORE_ELEMENT_FROM_KEYS(0x00)           // [address(metamoprhicContract), &mem[init_data], implAddress, salt]
+
+  // TODO: Create2
+
+  // TODO: Initialize
+
+  // TODO: Emit Metamorphosed
+
+  // TODO: Return address(metamorphicContract)
+
 }
 
 /// @notice Stateful
