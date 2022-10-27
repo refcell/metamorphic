@@ -291,6 +291,8 @@
   dup1 dup3 [IMPLEMENTATIONS]
   STORE_ELEMENT_FROM_KEYS(0x00)
 
+  // TODO: Fix:: below should use [MEAMORPHIC_CONTRACT_INITIALIZATION_CODE] not the calldata
+
   // Deploy the metamorphic contract data with create2
   dup5                                    // [salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   dup4 dup1 calldataload                  // [init_data_size, &mem[init_data], salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
