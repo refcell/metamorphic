@@ -282,16 +282,33 @@
   create                                  // [address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
 
   // Validate Creation
-  dup1 validCreationJump jumpi
+  dup1 validCreateJump jumpi
   // TODO: revert with "CREATE_FAILED" 
   0x00 dup1 revert
-  validCreationJump:
+  validCreateJump:
 
   // Store the implementation contract address
   dup1 dup3 [IMPLEMENTATIONS]
   STORE_ELEMENT_FROM_KEYS(0x00)
 
-  // 
+  // Deploy the metamorphic contract data with create2
+  dup5                                    // [salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup4 dup1 calldataload                  // [init_data_size, &mem[init_data], salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  swap1 0x20 add 0x00                     // [value, mem[init_data + 0x20], init_data_size, salt, address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  create2                                 // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+
+  // Validate the Creation
+  dup3 dup2 eq validCreate2Jump
+  // TODO: Revert with "CREATE2_FAILED"
+  0x00 dup1 revert
+  validCreate2Jump:
+
+  // Initialize the new metamorphic contract if any data or value is provided
+
+
+  // Emit the Metamorphosed event
+  // TODO emit Metamorphosed(deployedMetamorphicContract, implementationContract);
+  // __EVENT_HASH(Metamorphosed) 0x00 0x00 log3
 }
 
 
