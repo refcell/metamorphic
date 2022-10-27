@@ -56,8 +56,8 @@
 
 
 // Imports
-#include "../data-structures/Hashmap.huff"
-#include "../utils/CommonErrors.huff"
+#include "huffmate/data-structures/Hashmap.huff"
+#include "huffmate/utils/CommonErrors.huff"
 
 // Stateful Interface
 #define function deployMetamorphicContract(bytes32, bytes calldata, bytes calldata) payable returns (address)
@@ -274,33 +274,32 @@
 /// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT() = takes (0) returns (0) {
   // Load the salt from calldata
-  0x04 calldataload                       // [bytes32(salt)]
+  0x04 calldataload                                           // [bytes32(salt)]
 
   // Load the implementation contract init code to the same location in memory
-  0x24 calldataload                       // [&calldata[init_code], salt]
-  dup1 calldataload                       // [size, &calldata[init_code], salt]
-  dup2 dup1 calldatacopy                  // [&mem[init_code], salt]
+  0x24 calldataload                                           // [&calldata[init_code], salt]
+  dup1 calldataload                                           // [size, &calldata[init_code], salt]
+  dup2 dup1 calldatacopy                                      // [&mem[init_code], salt]
 
   // Load the metamorphic contract init calldata to the same place in memory
-  0x44 calldataload                       // [&calldata[init_data], &mem[init_code], salt]
-  dup1 calldataload                       // [size, &calldata[init_data], &mem[init_code], salt]
-  dup2 dup1 calldatacopy                  // [&mem[init_data], &mem[init_code], salt]
+  0x44 calldataload                                           // [&calldata[init_data], &mem[init_code], salt]
+  dup1 calldataload                                           // [size, &calldata[init_data], &mem[init_code], salt]
+  dup2 dup1 calldatacopy                                      // [&mem[init_data], &mem[init_code], salt]
 
   // Modifiers
-  dup3 CONTAINS_CALLER()                  // [&mem[init_data], &mem[init_code], salt]
+  dup3 CONTAINS_CALLER()                                      // [&mem[init_data], &mem[init_code], salt]
 
   // Get the metamorphic contract address
-  dup3 _COMPUTE_METAMORPHIC_ADDRESS()     // [address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup3 _COMPUTE_METAMORPHIC_ADDRESS()                         // [address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
 
   // Deploy the implementation init code
-  dup3 dup1 calldataload                  // [init_code_size, &mem[init_code], address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
-  swap1 0x20 add 0x00                     // [value, mem[init_code + 0x20], init_code_size, address(metamoprhicContract), mem[init_data], mem[init_code], salt]
-  create                                  // [address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup3 dup1 calldataload                                      // [init_code_size, &mem[init_code], address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  swap1 0x20 add 0x00                                         // [value, mem[init_code + 0x20], init_code_size, address(metamoprhicContract), mem[init_data], mem[init_code], salt]
+  create                                                      // [address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
 
   // Validate Creation
-  dup1 validCreateJump jumpi
-  // TODO: Revert with "CREATE_FAILED" 
-  0x00 dup1 revert
+  dup1 validCreateJump jumpi                                  // [address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  CREATE_FAILED(0x00)                                         // _reverts_
   validCreateJump:
 
   // Store the implementation contract address
@@ -316,9 +315,8 @@
   create2                                                     // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
 
   // Validate the Creation
-  dup3 dup2 eq validCreate2Jump
-  // TODO: Revert with "CREATE2_FAILED"
-  0x00 dup1 revert
+  dup3 dup2 eq validCreate2Jump                               // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  REVERT_CREATE_TWO_FAILED(0x00)                              // _reverts_
   validCreate2Jump:
 
   // If any data or value is provided
@@ -337,9 +335,8 @@
   call                                                        // [success, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
   
   // Validate call success
-  emitEventJump jumpi
-  // TODO: Revert with "INITIALIZATION_FAILED"
-  0x00 dup1 revert
+  emitEventJump jumpi                                         // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  INITIALIZATION_FAILED(0x00)                                 // _reverts_
 
   // Emit the Metamorphosed event
   emitEventJump:                                              // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
@@ -370,27 +367,71 @@
 /// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT_FROM_EXISTING() = takes (0) returns (0) {
   // Load the salt from calldata
-  0x04 calldataload                       // [bytes32(salt)]
+  0x04 calldataload                                           // [bytes32(salt)]
 
   // Load the implementation contract address
-  0x24 calldataload                       // [implAddress, salt]
+  0x24 calldataload                                           // [implAddress, salt]
 
   // Load the metamorphic contract init calldata to the same place in memory
-  0x44 calldataload                       // [&calldata[init_data], implAddress, salt]
-  dup1 calldataload                       // [size, &calldata[init_data], implAddress, salt]
-  dup2 dup1 calldatacopy                  // [&mem[init_data], implAddress, salt]
+  0x44 calldataload                                           // [&calldata[init_data], implAddress, salt]
+  dup1 calldataload                                           // [size, &calldata[init_data], implAddress, salt]
+  dup2 dup1 calldatacopy                                      // [&mem[init_data], implAddress, salt]
 
   // Modifiers
-  dup3 CONTAINS_CALLER()                  // [&mem[init_data], implAddress, salt]
+  dup3 CONTAINS_CALLER()                                      // [&mem[init_data], implAddress, salt]
 
   // Get the metamorphic contract address
-  dup3 _COMPUTE_METAMORPHIC_ADDRESS()     // [address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  dup3 _COMPUTE_METAMORPHIC_ADDRESS()                         // [address(metamoprhicContract), &mem[init_data], implAddress, salt]
 
   // Store the implementation address to be retrieved by the metamoprhic contract
-  dup3 dup2 [IMPLEMENTATIONS]             // [slot, address(metamoprhicContract), implAddress, address(metamoprhicContract), &mem[init_data], implAddress, salt]
-  STORE_ELEMENT_FROM_KEYS(0x00)           // [address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  dup3 dup2 [IMPLEMENTATIONS]                                 // [slot, address(metamoprhicContract), implAddress, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  STORE_ELEMENT_FROM_KEYS(0x00)                               // [address(metamoprhicContract), &mem[init_data], implAddress, salt]
 
-  // TODO: Create2
+  // Deploy the metamorphic contract data with create2
+  dup4                                                        // [salt, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  [MEAMORPHIC_CONTRACT_INITIALIZATION_CODE] 0x00 mstore       // [salt, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  0x1D                                                        // [size, salt, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  0x00                                                        // [offset, size, salt, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  0x00                                                        // [value, offset, size, salt, address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  create2                                                     // [address(newMetaContract), address(metamoprhicContract), &mem[init_data], implAddress, salt]
+
+  // Validate the Creation
+  dup2 dup2 eq validCreate2Jump                               // [address(newMetaContract), address(metamoprhicContract), &mem[init_data], implAddress, salt]
+  REVERT_CREATE_TWO_FAILED(0x00)                              // _reverts_
+  validCreate2Jump:                                           // [address(newMetaContract), address(metamoprhicContract), &mem[init_data], implAddress, salt]
+
+
+
+
+
+  // If any data or value is provided
+  dup4 mload iszero                                           // [init_data.length == 0, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  callvalue iszero and                                        // [msg.value == 0 && init_data.length == 0, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  emitEventJump jumpi                                         // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+
+  // Initialize the new metamorphic contract
+  0x00                                                        // [retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup1                                                        // [retOffset, retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup6 mload                                                  // [argSize, retOffset, retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup7 0x20 add                                               // [argOffset, argSize, retOffset, retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  callvalue                                                   // [value, argOffset, argSize, retOffset, retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  dup6                                                        // [address, value, argOffset, argSize, retOffset, retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  gas                                                         // [gas, address, value, argOffset, argSize, retOffset, retSize, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  call                                                        // [success, address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  
+  // Validate call success
+  emitEventJump jumpi                                         // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  INITIALIZATION_FAILED(0x00)                                 // _reverts_
+
+  // Emit the Metamorphosed event
+  emitEventJump:                                              // [address(newMetaContract), address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+  __EVENT_HASH(Metamorphosed) 0x00 0x00 log3                  // [address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
+
+  // Return the metamorphic contract address
+  0x00 mstore                                                 // [&mem[init_data], &mem[init_code], salt]
+  0x20 0x00 return                                            // _returns_
+
+
 
   // TODO: Initialize
 
@@ -572,6 +613,41 @@
 // Internal Helpers
 // ----------------------------------
 
+#define constant CREATE_FAILED = 0x4352454154455f4641494c454400000000000000000000000000000000000000
+#define constant CREATE_FAILED_LENGTH = 0x0d
+
+#define constant CREATE_TWO_FAILED = 0x435245415445325f4641494c4544000000000000000000000000000000000000
+#define constant CREATE_TWO_FAILED_LENGTH = 0x0e
+
+#define constant INITIALIZATION_FAILED = 0x494e495449414c495a4154494f4e5f4641494c45440000000000000000000000 
+#define constant INITIALIZATION_FAILED_LENGTH = 0x15
+
+/// @notice Internal
+/// @notice Reverts with "CREATE_FAILED"
+#define macro REVERT_CREATE_FAILED(condition) = takes (0) returns (0) {
+    [CREATE_FAILED]            // [errStr]
+    [CREATE_FAILED_LENGTH]     // [errLen, errStr]
+    <condition>                 // [cond, errLen, errStr]
+    REQUIRE()                   // []
+}
+
+/// @notice Internal
+/// @notice Reverts with "CREATE2_FAILED"
+#define macro REVERT_CREATE_TWO_FAILED(condition) = takes (0) returns (0) {
+    [CREATE_TWO_FAILED]            // [errStr]
+    [CREATE_TWO_FAILED_LENGTH]     // [errLen, errStr]
+    <condition>                    // [cond, errLen, errStr]
+    REQUIRE()                      // []
+}
+
+/// @notice Internal
+/// @notice Reverts with "INITIALIZATION_FAILED"
+#define macro REVERT_INITIALIZATION_FAILED(condition) = takes (0) returns (0) {
+    [INITIALIZATION_FAILED]            // [errStr]
+    [INITIALIZATION_FAILED_LENGTH]     // [errLen, errStr]
+    <condition>                        // [cond, errLen, errStr]
+    REQUIRE()                          // []
+}
 
 /// @notice Internal
 /// @notice Calculates the metamorphic contract address given a salt
