@@ -444,7 +444,40 @@
 ///        contract that will be deployed by the transient contract.
 /// @return Address of the metamorphic contract that will be created.
 #define macro DEPLOY_METAMORPHIC_CONTRACT_WITH_CONSTRUCTOR() = takes (0) returns (0) {
-  // TODO:
+  // Load the salt from calldata
+  0x04 calldataload                                 // [salt]
+
+  // Load the init code from calldata
+  0x24 calldataload                                 // [&calldata[initCode], salt]
+  
+  // Load the transient init code storage pointer
+  [TRANSIENT_CONTRACT_INITIALIZATION_CODE]          // [&storage[transientInitCode], &calldata[initCode], salt]
+
+  // Get the transient contract address using the salt
+  dup3 _COMPUTE_TRANSIENT_ADDRESS()                 // [address, &storage[transientInitCode], &calldata[initCode], salt]
+
+  // Store the init code in storage
+  dup1 [INIT_CODES] GET_SLOT_FROM_KEYS(0x00)        // [&storage[initCodes], address, &storage[transientInitCode], &calldata[initCode], salt]
+  dup4 calldataload                                 // [size, &storage[initCodes], address, &storage[transientInitCode], &calldata[initCode], salt]
+  dup1 dup3 sstore                                  // [size, &storage[initCodes], address, &storage[transientInitCode], &calldata[initCode], salt]
+  swap1                                             // [&storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
+  0x00                                              // [i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
+
+  iterateCalldataCode:
+    dup3 swap1 lt                                   // [i < size, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    loadTransientContractInitCode jumpi             // [i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    dup6 0x20 add calldataload                      // [initCodeChunk, i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    swap2 0x20 add                                  // [&storage[initCodes] + 0x20, i, initCodeChunk, size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    swap2 dup3 sstore                               // [i, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    0x20 add                                        // [i + 0x20, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
+
+  // Load transient contract data and length of data, then deploy via CREATE2.
+  loadTransientContractInitCode:
+  pop pop pop                                       // [address, &storage[transientInitCode], &calldata[initCode], salt]
+  swap1                                             // [&storage[transientInitCode], address, &calldata[initCode], salt]
+  
+
+
 }
 
 
