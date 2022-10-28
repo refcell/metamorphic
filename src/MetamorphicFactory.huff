@@ -184,8 +184,25 @@
   // Input Stack: []
   // Output Stack: [hash]
 
-  // TODO: Iterate over <ptr> storage bytes, save to memory, and hash
+  // Save bytes at <ptr> to memory
+  <ptr>                           // [&storage[data]]
+  dup1 0x20 add swap1             // [&storage[data], &storage[data] + 0x20]
+  sload dup1 0x00 mstore          // [size, &storage[data] + 0x20]
+  0x00                            // [i, size, &storage[data] + 0x20]
 
+  // Loop over data and store to memory
+  memStoreLoop:
+    dup2 dup2 lt iszero           // [i >= size, i, size, &storage[data] + 0x20]
+    hashMem jumpi                 // [i, size, &storage[data] + 0x20]
+    dup3 dup2 add                 // [&storage[data] + 0x20 + i, i, size, &storage[data] + 0x20]
+    sload                         // [word, i, size, &storage[data] + 0x20]
+    0x20 add dup1 mstore          // [i + 0x20, size, &storage[data] + 0x20]
+    memStoreLoop jump             // [i + 0x20, size, &storage[data] + 0x20]
+
+  // Hash memory at 0x20 for size &mem[0x00:0x20]
+  pop swap1 pop                   // [size]
+  0x20                            // [offset, size]
+  sha3                            // [hash]
 }
 
 /// @notice Constructor
