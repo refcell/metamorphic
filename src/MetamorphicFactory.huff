@@ -151,25 +151,30 @@
 /// @notice Saves bytes memory to storage
 /// @param ptr The pointer to the storage location
 #define macro _SAVE_BYTES_TO_STORAGE(ptr) = takes (1) returns (0) {
-  // Input Stack: [bytes size loc]
+  // Input Stack: [&mem[data]]
   // Output Stack: []
 
-  // Loop over the memory and save to storage
-  dup1 mload                        // [size, loc]
-  swap1 0x20 add                    // [bytes_ptr, size]
-  0x00                              // [i, bytes_ptr, size]
+  // Load the size and save to storage
+  <ptr> dup1                        // [&storage[data], &storage[data], &mem[data]]
+  dup3 mload dup1                   // [size, size, &storage[data], &storage[data], &mem[data]]
+  swap2 sstore                      // [size, &storage[data], &mem[data]]
+
+  // Loop over data and save to storage
+  swap1 swap2 0x20 add              // [&mem[data] + 0x20, size, &storage[data]]
+  0x00                              // [i, &mem[data] + 0x20, size, &storage[data]]
+
   loop:
-    0x20 add dup3 dup2 lt iszero    // [i + 0x20 >= size, i + 0x20, bytes_ptr, size]
-    done jumpi                      // [i + 0x20, bytes_ptr, size]
-    dup2 dup2 add
-
-    // TODO::::
-
-    <ptr> sstore
+    dup3 dup2 lt iszero             // [i >= size, i, &mem[data], size, &storage[data]]
+    done jumpi                      // [i, &mem[data], size, &storage[data]]
+    dup2 dup2 add                   // [&mem[data] + i, i, &mem[data], size, &storage[data]]
+    dup5 sstore                     // [i, &mem[data], size, &storage[data]]
+    0x20 add                        // [i + 0x20, &mem[data], size, &storage[data]]
+    loop jump
 
   done:
-    // Clean the stack
-    pop pop pop
+
+  // Clean the stack
+  pop pop pop pop
 }
 
 /// @notice Internal
@@ -470,6 +475,7 @@
     swap2 0x20 add                                  // [&storage[initCodes] + 0x20, i, initCodeChunk, size, address, &storage[transientInitCode], &calldata[initCode], salt]
     swap2 dup3 sstore                               // [i, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
     0x20 add                                        // [i + 0x20, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    iterateCalldataCode jump                        // [i + 0x20, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
 
   // Load transient contract data and length
   loadTransientContractInitCode:
@@ -483,6 +489,7 @@
     dup3 0x20 add dup2 add                          // [&storage[transientInitCode] + 0x20 + i, i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
     sload dup2 0x20 add mstore                      // [i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
     0x20 add                                        // [i + 0x20, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+    iterateTransientCode jump                       // [i + 0x20, size, &storage[transientInitCode], address, &calldata[initCode], salt]
 
   // Deploy with CREATE2
   createJump:
