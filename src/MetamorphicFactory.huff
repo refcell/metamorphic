@@ -464,20 +464,49 @@
   0x00                                              // [i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
 
   iterateCalldataCode:
-    dup3 swap1 lt                                   // [i < size, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
+    dup3 dup2 lt iszero                             // [i >= size, i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
     loadTransientContractInitCode jumpi             // [i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
     dup6 0x20 add calldataload                      // [initCodeChunk, i, &storage[initCodes], size, address, &storage[transientInitCode], &calldata[initCode], salt]
     swap2 0x20 add                                  // [&storage[initCodes] + 0x20, i, initCodeChunk, size, address, &storage[transientInitCode], &calldata[initCode], salt]
     swap2 dup3 sstore                               // [i, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
     0x20 add                                        // [i + 0x20, &storage[initCodes] + 0x20, size, address, &storage[transientInitCode], &calldata[initCode], salt]
 
-  // Load transient contract data and length of data, then deploy via CREATE2.
+  // Load transient contract data and length
   loadTransientContractInitCode:
   pop pop pop                                       // [address, &storage[transientInitCode], &calldata[initCode], salt]
   swap1                                             // [&storage[transientInitCode], address, &calldata[initCode], salt]
-  
+  dup1 sload dup1 0x00 mstore                       // [size, &storage[transientInitCode], address, &calldata[initCode], salt]
+  0x00                                              // [i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+  iterateTransientInitCode:
+    dup2 dup2 lt iszero                             // [i >= size, i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+    createJump jumpi                                // [i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+    dup3 0x20 add dup2 add                          // [&storage[transientInitCode] + 0x20 + i, i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+    sload dup2 0x20 add mstore                      // [i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+    0x20 add                                        // [i + 0x20, size, &storage[transientInitCode], address, &calldata[initCode], salt]
 
+  // Deploy with CREATE2
+  createJump:
+  swap5 swap1                                       // [size, salt, &storage[transientInitCode], address, &calldata[initCode], i]
+  0x20                                              // [offset, size, salt, &storage[transientInitCode], address, &calldata[initCode], i]
+  callvalue                                         // [value, offset, size, salt, &storage[transientInitCode], address, &calldata[initCode], i]
+  create2                                           // [deployedAddress, &storage[transientInitCode], address, &calldata[initCode], i]
 
+  // Validate the deployed Addgress
+  dup3 eq emitMetamorphosed jumpi                   // [&storage[transientInitCode], address, &calldata[initCode], i]
+  CREATE_TWO_FAILED(0x00)                           // _reverts_
+  emitMetamorphosed:                                // [&storage[transientInitCode], address, &calldata[initCode], i]
+
+  // Get the metamorphic address
+  pop                                               // [address, &calldata[initCode], i]
+  dup1 _COMPUTE_ADDRESS_WITH_CONSTRUCTOR()          // [metamorphicAddress, address, &calldata[initCode], i]
+
+  // Emit
+  swap1 dup2                                        // [metamorphicAddress, address, metamorphicAddress, &calldata[initCode], i]
+  __EVENT_HASH(Metamorphosed) 0x00 0x00 log3        // [metamorphicAddress, &calldata[initCode], i]
+
+  // Return the metamorphic contract address
+  0x00 mstore                                       // [&calldata[initCode], i]
+  0x20 0x00 return                                  // _returns_
 }
 
 
