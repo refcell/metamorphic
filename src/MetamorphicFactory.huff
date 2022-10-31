@@ -61,23 +61,23 @@
 
 // Stateful Interface
 #define function deployMetamorphicContract(bytes32, bytes calldata, bytes calldata) payable returns (address)
-#define function deployMetamorphicContractFromExistingImplementation(bytes32, address, bytes calldata) external payable returns (address)
-#define function deployMetamorphicContractWithConstructor(bytes32, bytes calldata) external payable returns (address)
+#define function deployMetamorphicContractFromExistingImplementation(bytes32, address, bytes calldata) payable returns (address)
+#define function deployMetamorphicContractWithConstructor(bytes32, bytes calldata) payable returns (address)
 
 // Viewable Interface
 #define function getImplementation() view returns (address)
 #define function getInitializationCode() view returns (bytes memory)
 #define function getImplementationContractAddress(address) view returns (address)
 
-#define function getMetamorphicContractInstanceInitializationCode(address) external view returns (bytes memory)
-#define function findMetamorphicContractAddress(bytes32) external view returns (address)
-#define function findTransientContractAddress(bytes32) external view returns (address)
-#define function findMetamorphicContractAddressWithConstructor(bytes32) external view returns (address)
+#define function getMetamorphicContractInstanceInitializationCode(address) view returns (bytes memory)
+#define function findMetamorphicContractAddress(bytes32) view returns (address)
+#define function findTransientContractAddress(bytes32) view returns (address)
+#define function findMetamorphicContractAddressWithConstructor(bytes32) view returns (address)
 
-#define function getMetamorphicContractInitializationCode() external view returns (bytes memory)
-#define function getMetamorphicContractInitializationCodeHash() external view returns (bytes32)
-#define function getTransientContractInitializationCode() external view returns (bytes memory)
-#define function getTransientContractInitializationCodeHash() external view returns (bytes32)
+#define function getMetamorphicContractInitializationCode() view returns (bytes memory)
+#define function getMetamorphicContractInitializationCodeHash() view returns (bytes32)
+#define function getTransientContractInitializationCode() view returns (bytes memory)
+#define function getTransientContractInitializationCodeHash() view returns (bytes32)
 
 
 /// @notice Fires when a metamorphic contract is deployed by cloning another contract
@@ -93,18 +93,18 @@
 #define constant METAMORPHIC_CONTRACT_INITIALIZATION_CODE_HASH = 0x7e18b382dec96fdc3badcb1ca6258e4f14469630399ad6ccb243b0d9f5344366
 
 /// @notice Store init code for transient contracts that deploy metamorphic contracts
-#define constant TRANSIENT_CONTRACT_INITIALIZATION_CODE = FREE_MEMORY_POINTER()
+#define constant TRANSIENT_CONTRACT_INITIALIZATION_CODE = FREE_STORAGE_POINTER()
 
 /// @notice Store the hash of the initialization code for transient contracts as well
-#define constant TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH = FREE_MEMORY_POINTER()
+#define constant TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH = FREE_STORAGE_POINTER()
 
 /// @notice Maintain a mapping of metamorphic contracts to metamorphic implementations
 /// @notice This is a mapping and should use the hashmap helpers: LOAD_ELEMENTS_FROM_KEYS and STORE_ELEMENT_FROM_KEYS
-#define constant IMPLEMENTATIONS = FREE_MEMORY_POINTER()
+#define constant IMPLEMENTATIONS = FREE_STORAGE_POINTER()
 
 /// @notice Maintain a mapping of transient contracts to metamorphic init codes
 /// @notice This is a mapping and should use the hashmap helpers: LOAD_ELEMENTS_FROM_KEYS and STORE_ELEMENT_FROM_KEYS
-#define constant INIT_CODES = FREE_MEMORY_POINTER()
+#define constant INIT_CODES = FREE_STORAGE_POINTER()
 
 /// @notice Internal
 /// @notice Helper macro to copy the bytes memory constructor argument
