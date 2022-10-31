@@ -149,13 +149,12 @@
 
 /// @notice Internal
 /// @notice Saves bytes memory to storage
-/// @param ptr The pointer to the storage location
-#define macro _SAVE_BYTES_TO_STORAGE(ptr) = takes (1) returns (0) {
-  // Input Stack: [&mem[data]]
+#define macro _SAVE_BYTES_TO_STORAGE() = takes (1) returns (0) {
+  // Input Stack: [&storage[data], &mem[data]]
   // Output Stack: []
 
   // Load the size and save to storage
-  <ptr> dup1                        // [&storage[data], &storage[data], &mem[data]]
+  dup1                              // [&storage[data], &storage[data], &mem[data]]
   dup3 mload dup1                   // [size, size, &storage[data], &storage[data], &mem[data]]
   swap2 sstore                      // [size, &storage[data], &mem[data]]
 
@@ -179,13 +178,11 @@
 
 /// @notice Internal
 /// @notice Hashes the transient initialization code from storage
-/// @param ptr The pointer to the storage location
-#define macro _HASH_STORAGE_BYTES(ptr) = takes (0) returns (1) {
-  // Input Stack: []
+#define macro _HASH_STORAGE_BYTES() = takes (0) returns (1) {
+  // Input Stack: [&storage[data]]
   // Output Stack: [hash]
 
-  // Save bytes at <ptr> to memory
-  <ptr>                           // [&storage[data]]
+  // Save bytes to memory
   dup1 0x20 add swap1             // [&storage[data], &storage[data] + 0x20]
   sload dup1 0x00 mstore          // [size, &storage[data] + 0x20]
   0x00                            // [i, size, &storage[data] + 0x20]
@@ -200,6 +197,7 @@
     memStoreLoop jump             // [i + 0x20, size, &storage[data] + 0x20]
 
   // Hash memory at 0x20 for size &mem[0x00:0x20]
+  hashMem:
   pop swap1 pop                   // [size]
   0x20                            // [offset, size]
   sha3                            // [hash]
@@ -211,10 +209,12 @@
   _LOAD_CONSTRUCTOR_ARGS()                                            // [transientContractInitializationCode]
 
   // Store the transient contract initialization code in storage
-  _SAVE_BYTES_TO_STORAGE([TRANSIENT_CONTRACT_INITIALIZATION_CODE])    // []
+  [TRANSIENT_CONTRACT_INITIALIZATION_CODE]                            // [initCode, transientContractInitializationCode]
+  _SAVE_BYTES_TO_STORAGE()                                            // []
 
   // Calculate the transient contract initialization code hash
-  _HASH_STORAGE_BYTES([TRANSIENT_CONTRACT_INITIALIZATION_CODE])       // [hash]
+  [TRANSIENT_CONTRACT_INITIALIZATION_CODE]                            // [initCode]
+  _HASH_STORAGE_BYTES()                                               // [hash]
 
   // Store the transient contract initialization code hash in storage
   [TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH] sstore             // []
@@ -321,7 +321,7 @@
 
   // Validate Creation
   dup1 validCreateJump jumpi                                  // [address(implContract), address(metamoprhicContract), &mem[init_data], &mem[init_code], salt]
-  CREATE_FAILED(0x00)                                         // _reverts_
+  REVERT_CREATE_FAILED(0x00)                                  // _reverts_
   validCreateJump:
 
   // Store the implementation contract address
@@ -506,7 +506,7 @@
     dup3 0x20 add dup2 add                          // [&storage[transientInitCode] + 0x20 + i, i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
     sload dup2 0x20 add mstore                      // [i, size, &storage[transientInitCode], address, &calldata[initCode], salt]
     0x20 add                                        // [i + 0x20, size, &storage[transientInitCode], address, &calldata[initCode], salt]
-    iterateTransientCode jump                       // [i + 0x20, size, &storage[transientInitCode], address, &calldata[initCode], salt]
+    iterateTransientInitCode jump                   // [i + 0x20, size, &storage[transientInitCode], address, &calldata[initCode], salt]
 
   // Deploy with CREATE2
   createJump:
@@ -517,7 +517,7 @@
 
   // Validate the deployed Addgress
   dup3 eq emitMetamorphosed jumpi                   // [&storage[transientInitCode], address, &calldata[initCode], i]
-  CREATE_TWO_FAILED(0x00)                           // _reverts_
+  REVERT_CREATE_TWO_FAILED(0x00)                    // _reverts_
   emitMetamorphosed:                                // [&storage[transientInitCode], address, &calldata[initCode], i]
 
   // Get the metamorphic address
@@ -546,7 +546,7 @@
 #define macro GET_IMPLEMENTATION() = takes (0) returns (0) {
   // Load the implementation from internal mapping
   caller [IMPLEMENTATIONS]            // [loc, msg.sender]
-  LOAD_ELEMENTS_FROM_KEYS(0x00)       // [address(implementation)]
+  LOAD_ELEMENT_FROM_KEYS(0x00)       // [address(implementation)]
 
   // Return the implementation address
   0x00 mstore                         // []
@@ -575,7 +575,7 @@
   // Load the address from calldata
   0x04 calldataload                   // [address]
   [IMPLEMENTATIONS]                   // [loc, address]
-  LOAD_ELEMENTS_FROM_KEYS(0x00)       // [implementation]
+  LOAD_ELEMENT_FROM_KEYS(0x00)       // [implementation]
 
   // Return the implementation address
   0x00 mstore                         // []
@@ -729,7 +729,9 @@
   // Output stack: [address]
 
   // Compute the address
-  _COMPUTE_ADDRESS([METAMORPHIC_CONTRACT_INITIALIZATION_CODE_HASH])
+  [METAMORPHIC_CONTRACT_INITIALIZATION_CODE_HASH]     // [hash, salt]
+  swap1                                               // [salt, hash]
+  _COMPUTE_ADDRESS()                                  // [address]
 }
 
 /// @notice Internal
@@ -739,13 +741,15 @@
   // Output stack: [address]
 
   // Compute the address
-  _COMPUTE_ADDRESS([TRANSIENT_CONTRACT_INITIALIZATION_CODE_HASH])
+  [TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH]    // [hash, salt]
+  swap1                                               // [salt, hash]
+  _COMPUTE_ADDRESS()                                  // [address]
 }
 
 /// @notice Internal
 /// @notice Calculates a contract address given a particular salt
-#define macro _COMPUTE_ADDRESS(hash) = takes (1) returns (1) {
-  // Input stack: [salt]
+#define macro _COMPUTE_ADDRESS() = takes (1) returns (1) {
+  // Input stack: [salt, hash]
   // Output stack: [address]
 
   // Start with 0xff to distinguish from RLP
@@ -759,7 +763,7 @@
   0x34 mstore                         // []
 
   // Store the code hash @ 0x54:0x74
-  <hash> 0x54 mstore                  // []
+  0x54 mstore                         // []
 
   // Hash the packed data
   0x55 0x1f sha3                      // [raw_hash]
