@@ -20,15 +20,9 @@ Cool, so we have completely deterministic, redeployable contracts on Ethereum us
 
 Well, this fails if the initialization code of the contract is non-deterministic. [0age](https://github.com/0age) presents a simple example: consider a contract that calls into some external contract and uses the variable return data to construct the final bytecode. Then the initialization code is in fact non-deterministic, and `CREATE2` will generate an entirely new address for each time the contract is redeployed if the return data from the external contract changes.
 
+This is where metamorphic contracts step in. Metamorphic contracts provide a way to create a new contract at the same address with different bytecode, even when the initialization code is non-deterministic. They do this by using an intermediary contract that is deployed to the desired address first. This intermediary contract is designed in such a way that it can be "transformed" into the final contract, allowing the final bytecode to be different from the bytecode of the intermediary contract.
 
-
-
-
-
-
-
-// TODO:
-
+In this project provide metamorphic contracts in Huff, a low-level, stack-based language for Ethereum smart contracts. By using Huff, we aim to provide a more efficient and gas-optimized implementation of metamorphic contracts. The focus is to make it easier for developers to create and manage redeployable contracts on Ethereum. 
 
 ### Usage
 
