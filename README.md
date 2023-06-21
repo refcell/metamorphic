@@ -28,7 +28,21 @@ In this project provide metamorphic contracts in Huff, a low-level, stack-based 
 
 **Deploying Metamorphic Contracts**
 
-// TODO:
+To deploy a metamorphic contract, follow the steps below:
+
+1. **Write your contract**: Create your smart contract that you wish to make redeployable. Be aware of any non-deterministic initialization code, as this can affect the deployment process.
+
+2. **Include the HuffCloneLib**: In your contract, include the `HuffCloneLib` library. This provides the `CLONE` macro which is used to create metamorphic versions of your contract.
+
+3. **Use HuffClone in your contract**: Also include the `HuffClone` in your contract. This provides helper macros for reading immutable args, which are important for the redeployment process.
+
+4. **Create a factory contract**: Create a factory contract that will be responsible for deploying your metamorphic contract. This factory contract should use the `HuffCloneLib` library to create clones of your original contract.
+
+5. **Deploy the factory contract**: Deploy the factory contract onto the Ethereum network. This can be done using your preferred deployment method.
+
+6. **Deploy your metamorphic contract**: Use the factory contract to deploy instances of your metamorphic contract. You can do this by calling the appropriate function in your factory contract.
+
+For a concrete example of how to use these libraries and macros, refer to the `ExampleClone` and `ExampleCloneFactory` contracts in this project.
 
 Clone factory contracts should use the [`HuffCloneLib`](src/HuffCloneLib.huff) library. `CLONE` is the main macro for creating clones.
 
